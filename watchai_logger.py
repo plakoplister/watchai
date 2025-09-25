@@ -13,10 +13,14 @@ import hashlib
 import socket
 
 class WatchAILogger:
-    def __init__(self, logs_dir="/Users/julienmarboeuf/Documents/BON PLEIN/WATCHAI/Logs"):
+    def __init__(self, logs_dir="./logs"):
         """Initialise le système de logging WATCHAI"""
         self.logs_dir = Path(logs_dir)
-        self.logs_dir.mkdir(exist_ok=True)
+        try:
+            self.logs_dir.mkdir(exist_ok=True)
+        except (PermissionError, OSError):
+            # Fallback to current directory if can't create logs dir
+            self.logs_dir = Path(".")
 
         # Fichiers de logs
         self.access_log_file = self.logs_dir / "access.log"
@@ -27,38 +31,56 @@ class WatchAILogger:
         self.setup_logging()
 
         # Initialiser le fichier de sessions s'il n'existe pas
-        if not self.session_log_file.exists():
-            with open(self.session_log_file, 'w', encoding='utf-8') as f:
-                json.dump({"sessions": []}, f, indent=2)
+        try:
+            if not self.session_log_file.exists():
+                with open(self.session_log_file, 'w', encoding='utf-8') as f:
+                    json.dump({"sessions": []}, f, indent=2)
+        except (PermissionError, OSError):
+            # Ignorer si impossible de créer le fichier
+            pass
 
     def setup_logging(self):
         """Configure le logging system"""
-        # Logger pour les accès
-        self.access_logger = logging.getLogger('watchai_access')
-        self.access_logger.setLevel(logging.INFO)
+        try:
+            # Logger pour les accès
+            self.access_logger = logging.getLogger('watchai_access')
+            self.access_logger.setLevel(logging.INFO)
 
-        # Handler pour fichier d'accès
-        access_handler = logging.FileHandler(self.access_log_file, encoding='utf-8')
-        access_formatter = logging.Formatter(
-            '%(asctime)s | %(levelname)s | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        access_handler.setFormatter(access_formatter)
+            # Handler pour fichier d'accès
+            access_handler = logging.FileHandler(self.access_log_file, encoding='utf-8')
+            access_formatter = logging.Formatter(
+                '%(asctime)s | %(levelname)s | %(message)s',
+                datefmt='%Y-%m-%d %H:%M:%S'
+            )
+            access_handler.setFormatter(access_formatter)
 
-        # Éviter les doublons
-        if not self.access_logger.handlers:
-            self.access_logger.addHandler(access_handler)
+            # Éviter les doublons
+            if not self.access_logger.handlers:
+                self.access_logger.addHandler(access_handler)
 
-        # Logger pour l'activité
-        self.activity_logger = logging.getLogger('watchai_activity')
-        self.activity_logger.setLevel(logging.INFO)
+            # Logger pour l'activité
+            self.activity_logger = logging.getLogger('watchai_activity')
+            self.activity_logger.setLevel(logging.INFO)
 
-        # Handler pour fichier d'activité
-        activity_handler = logging.FileHandler(self.activity_log_file, encoding='utf-8')
-        activity_handler.setFormatter(access_formatter)
+            # Handler pour fichier d'activité
+            activity_handler = logging.FileHandler(self.activity_log_file, encoding='utf-8')
+            activity_handler.setFormatter(access_formatter)
 
-        if not self.activity_logger.handlers:
-            self.activity_logger.addHandler(activity_handler)
+            if not self.activity_logger.handlers:
+                self.activity_logger.addHandler(activity_handler)
+
+        except (PermissionError, OSError):
+            # Fallback to console logging if file logging fails
+            self.access_logger = logging.getLogger('watchai_access_console')
+            self.activity_logger = logging.getLogger('watchai_activity_console')
+            console_handler = logging.StreamHandler()
+            console_formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+            console_handler.setFormatter(console_formatter)
+
+            if not self.access_logger.handlers:
+                self.access_logger.addHandler(console_handler)
+            if not self.activity_logger.handlers:
+                self.activity_logger.addHandler(console_handler)
 
     def get_client_info(self):
         """Récupère les informations du client"""
@@ -130,8 +152,11 @@ class WatchAILogger:
         """Sauvegarde les données de session dans le fichier JSON"""
         try:
             # Lire les données existantes
-            with open(self.session_log_file, 'r', encoding='utf-8') as f:
-                data = json.load(f)
+            try:
+                with open(self.session_log_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                data = {"sessions": []}
 
             # Ajouter la nouvelle session
             session_entry = {
@@ -155,15 +180,16 @@ class WatchAILogger:
                 json.dump(data, f, indent=2, ensure_ascii=False)
 
         except Exception as e:
-            self.activity_logger.error(f"Erreur sauvegarde session: {str(e)}")
+            # Log vers la console si le logger n'est pas disponible
+            print(f"Erreur sauvegarde session: {str(e)}")
 
     def get_recent_sessions(self, limit=50):
         """Récupère les sessions récentes"""
         try:
             with open(self.session_log_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            return data["sessions"][-limit:] if data["sessions"] else []
-        except:
+            return data["sessions"][-limit:] if data.get("sessions") else []
+        except (FileNotFoundError, json.JSONDecodeError, PermissionError):
             return []
 
     def get_session_stats(self):
