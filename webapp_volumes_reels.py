@@ -217,6 +217,17 @@ def load_data():
     """Charge les données depuis DB_Shipping_Master.xlsx"""
     if LOGGING_ENABLED:
         watchai_logger.log_activity("data_load", "Loading DB_Shipping_Master.xlsx")
+
+    # Vérifier et synchroniser la base de données automatiquement
+    try:
+        from db_sync import auto_sync_check
+        auto_sync_check()
+    except ImportError:
+        pass
+    except Exception as e:
+        if LOGGING_ENABLED:
+            watchai_logger.log_activity("sync_warning", f"Auto-sync failed: {str(e)}")
+
     try:
         # Essayer plusieurs chemins possibles
         possible_paths = [
