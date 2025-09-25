@@ -220,8 +220,8 @@ def load_data():
     try:
         # Essayer plusieurs chemins possibles
         possible_paths = [
+            Path("DB_Shipping_Master.xlsx"),              # À la racine du webapp
             Path("Master_Data/DB_Shipping_Master.xlsx"),  # Dans le dossier Master_Data
-            Path("DB_Shipping_Master.xlsx"),              # À la racine
             Path("../Master_Data/DB_Shipping_Master.xlsx"),
             Path("/mount/src/cacao-dashboard-ci/Master_Data/DB_Shipping_Master.xlsx"),  # Streamlit Cloud
         ]
@@ -330,7 +330,7 @@ def display_header(df):
     # Charger l'image en base64 pour intégration directe
     try:
         import base64
-        logo_path = Path("../Images/WatchAI logo2.png")
+        logo_path = Path("logo.png")
         if logo_path.exists():
             with open(logo_path, "rb") as f:
                 logo_data = base64.b64encode(f.read()).decode()
@@ -715,7 +715,7 @@ def check_authentication():
         # Charger le logo WATCHAI pour la page de connexion
         try:
             import base64
-            logo_path = Path("../Images/WatchAI logo2.png")
+            logo_path = Path("logo.png")
             if logo_path.exists():
                 with open(logo_path, "rb") as f:
                     logo_data = base64.b64encode(f.read()).decode()
