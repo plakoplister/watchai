@@ -118,5 +118,15 @@
       "name": "Julien",
       "role": "admin"
     }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-25T11:43:11.164515",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
   }
 ]
