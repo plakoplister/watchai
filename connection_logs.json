@@ -1,0 +1,122 @@
+[
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-26T11:11:58.069352",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-26T11:22:08.545511",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-26T22:34:25.855341",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-26T22:45:05.097165",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-27T07:38:02.007257",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-08-27T07:48:31.860028",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-22T09:56:52.765093",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-22T14:53:39.707857",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-22T15:30:43.841557",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T13:40:52.833606",
+    "success": true
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T13:49:15.800275",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T13:55:26.066377",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T13:59:27.932984",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T14:11:10.084857",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-23T14:14:35.081120",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-24T23:10:29.695009",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  },
+  {
+    "username": "Julien",
+    "timestamp": "2025-09-24T23:18:16.786312",
+    "success": true,
+    "user_info": {
+      "username": "Julien",
+      "name": "Julien",
+      "role": "admin"
+    }
+  }
+]
