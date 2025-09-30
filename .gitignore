@@ -1,0 +1,40 @@
+# Dossiers à ignorer
+Backups/
+logs/
+Webapp/.git.old/
+Webapp/backups/
+
+# Fichiers Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+*.pyc
+
+# Logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.temp
+*.bak
+
+# Fichiers système
+.DS_Store
+
+# Environnements virtuels
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Streamlit
+.streamlit/
+
+# Fichiers de connexion (contiennent des données sensibles)
+Webapp/connection_logs.json
+
+# Sauvegardes Excel
+*.xlsx~
+~$*.xlsx

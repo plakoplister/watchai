@@ -1,0 +1,29 @@
+{
+  "derniere_mise_a_jour": "2025-09-24T22:00:00",
+  "fichiers_integres": [
+    {
+      "nom": "ABJ - JUL 2025.xlsx",
+      "date_integration": "2025-09-23T12:00:00",
+      "lignes": 340,
+      "volume_kg": 21500000
+    },
+    {
+      "nom": "SPY - JUL 2025.xlsx",
+      "date_integration": "2025-09-23T12:00:00",
+      "lignes": 320,
+      "volume_kg": 33200000
+    },
+    {
+      "nom": "ABJ - AOU 2025.xlsx",
+      "date_integration": "2025-09-24T22:00:00",
+      "lignes": 365,
+      "volume_kg": 22045000
+    },
+    {
+      "nom": "SPY - AOU 2025.xlsx",
+      "date_integration": "2025-09-24T22:00:00",
+      "lignes": 352,
+      "volume_kg": 35229000
+    }
+  ]
+}
