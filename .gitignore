@@ -29,8 +29,8 @@ env/
 venv/
 ENV/
 
-# Streamlit
-.streamlit/
+# Streamlit (garder config.toml pour le déploiement)
+.streamlit/secrets.toml
 
 # Fichiers de connexion (contiennent des données sensibles)
 Webapp/connection_logs.json
