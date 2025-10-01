@@ -21,6 +21,21 @@ try:
 except ImportError:
     LOGGING_ENABLED = False
 
+# Import du middleware de sécurité
+try:
+    from security_middleware import security_middleware
+    SECURITY_ENABLED = True
+except ImportError:
+    SECURITY_ENABLED = False
+    st.warning("⚠️ Module de sécurité non disponible")
+
+# Import du système de watermarking
+try:
+    from data_watermarking import watermarking, get_watermarked_data
+    WATERMARKING_ENABLED = True
+except ImportError:
+    WATERMARKING_ENABLED = False
+
 # Configuration de la page
 st.set_page_config(
     page_title="WatchAI - Government Logistics Intelligence",
@@ -213,8 +228,8 @@ if LOGGING_ENABLED:
         st.session_state.logged_access = True
 
 @st.cache_data(ttl=3600, show_spinner="Chargement des données mises à jour...")
-def load_data():
-    """Charge les données depuis DB_Shipping_Master.xlsx"""
+def load_data_raw():
+    """Charge les données BRUTES depuis DB_Shipping_Master.xlsx (sans watermarking)"""
     if LOGGING_ENABLED:
         watchai_logger.log_activity("data_load", "Loading DB_Shipping_Master.xlsx")
 
@@ -288,6 +303,33 @@ def load_data():
     except Exception as e:
         st.error(f"Erreur chargement données: {e}")
         return None
+
+def load_data():
+    """
+    Charge les données et applique le watermarking selon l'utilisateur connecté
+    """
+    # Charger les données brutes (depuis cache)
+    df_raw = load_data_raw()
+
+    if df_raw is None:
+        return None
+
+    # Appliquer le watermarking si activé et si utilisateur connecté
+    if WATERMARKING_ENABLED and 'username' in st.session_state:
+        username = st.session_state.username
+        df_watermarked = watermarking.apply_watermark(df_raw, username)
+
+        # Logger pour l'admin
+        if LOGGING_ENABLED and username != "Julien":
+            watchai_logger.log_activity(
+                "data_watermark",
+                f"Applied watermark for user {username}"
+            )
+
+        return df_watermarked
+    else:
+        # Pas de watermarking (pas connecté ou désactivé)
+        return df_raw.copy()
 
 def determine_season(date):
     """Détermine la saison cacaoyère (Oct-Sept)"""
@@ -709,17 +751,17 @@ def display_season_analysis(df, season):
             st.dataframe(port_stats, use_container_width=True)
 
 def check_authentication():
-    """Gère l'authentification des utilisateurs"""
+    """Gère l'authentification des utilisateurs avec protections de sécurité"""
 
     # Utiliser la configuration depuis auth_config.py
     from auth_config import USERS, verify_password, get_user_info, log_connection
-    
+
     # Initialiser l'état de session
     if 'authenticated' not in st.session_state:
         st.session_state.authenticated = False
         st.session_state.username = None
         st.session_state.user_info = None
-    
+
     # Si pas authentifié, afficher le formulaire de connexion
     if not st.session_state.authenticated:
         # Charger le logo WATCHAI pour la page de connexion
@@ -743,17 +785,45 @@ def check_authentication():
             <p style='color: #666;'>Veuillez vous connecter pour accéder au dashboard</p>
         </div>
         """, unsafe_allow_html=True)
-        
+
         col1, col2, col3 = st.columns([1, 2, 1])
-        
+
         with col2:
+            # Vérifier si CAPTCHA est nécessaire
+            needs_captcha = False
+            if SECURITY_ENABLED and 'temp_username' in st.session_state:
+                needs_captcha, attempts = security_middleware.track_login_attempt(
+                    st.session_state.temp_username, success=False
+                )
+                if attempts > 0:
+                    st.warning(f"⚠️ {attempts} tentative(s) échouée(s)")
+
             with st.form("login_form"):
                 st.subheader("Connexion")
                 username = st.text_input("Nom d'utilisateur", key="login_username")
                 password = st.text_input("Mot de passe", type="password", key="login_password")
+
+                # Afficher CAPTCHA si nécessaire
+                captcha_valid = True
+                if SECURITY_ENABLED and needs_captcha:
+                    st.warning("🔒 Plusieurs tentatives échouées détectées. Veuillez compléter le CAPTCHA.")
+                    security_middleware.display_captcha()
+                    captcha_input = st.text_input("Entrez le code ci-dessus:", key="captcha_input")
+                    captcha_valid = False  # Sera vérifié lors du submit
+
                 submit = st.form_submit_button("Se connecter", use_container_width=True)
-                
+
                 if submit:
+                    st.session_state.temp_username = username
+
+                    # Vérifier CAPTCHA si nécessaire
+                    if SECURITY_ENABLED and needs_captcha:
+                        if not security_middleware.verify_captcha(captcha_input):
+                            st.error("❌ Code CAPTCHA incorrect")
+                            st.session_state.regenerate_captcha = True
+                            st.rerun()
+                            return False
+
                     # Vérifier les identifiants
                     if verify_password(username, password):
                         # Connexion réussie
@@ -761,11 +831,21 @@ def check_authentication():
                         st.session_state.username = username
                         st.session_state.user_info = get_user_info(username)
                         log_connection(username, success=True)
+
+                        # Reset sécurité
+                        if SECURITY_ENABLED:
+                            security_middleware.track_login_attempt(username, success=True)
+                            if 'temp_username' in st.session_state:
+                                del st.session_state.temp_username
+
                         st.rerun()
                     else:
                         # Connexion échouée
                         log_connection(username, success=False)
-                        st.error("Nom d'utilisateur ou mot de passe incorrect")
+                        if SECURITY_ENABLED:
+                            security_middleware.track_login_attempt(username, success=False)
+                        st.error("❌ Nom d'utilisateur ou mot de passe incorrect")
+                        st.session_state.regenerate_captcha = True
 
         return False
 
@@ -773,23 +853,76 @@ def check_authentication():
 
 def main():
     """Fonction principale"""
-    
+
     # Vérifier l'authentification
     if not check_authentication():
         return
-    
+
+    # === SÉCURITÉ 1: SESSION TIMEOUT ===
+    if SECURITY_ENABLED:
+        if not security_middleware.check_session_timeout():
+            st.warning("⏰ Votre session a expiré par inactivité (30 minutes)")
+            st.session_state.authenticated = False
+            st.session_state.username = None
+            st.session_state.user_info = None
+            security_middleware.reset_session()
+            st.rerun()
+            return
+
+    # === SÉCURITÉ 2: RATE LIMITING ===
+    if SECURITY_ENABLED:
+        session_id = security_middleware.get_session_id()
+        allowed, remaining, reset_time = security_middleware.check_rate_limit(session_id)
+
+        if not allowed:
+            st.error(f"🚫 Limite de requêtes dépassée (100 requêtes/heure)")
+            st.info(f"Réinitialisation à: {reset_time}")
+            st.stop()
+
     # Afficher les infos utilisateur dans la sidebar
     st.sidebar.markdown(f"""
-    **Connecté en tant que:**  
-    {st.session_state.user_info['name']}  
+    **Connecté en tant que:**
+    {st.session_state.user_info['name']}
     *({st.session_state.user_info['role']})*
     """)
-    
+
+    # Afficher les infos de sécurité en sidebar (si admin)
+    if st.session_state.get("username") == "Julien":
+        security_info = []
+
+        # Rate limiting info
+        if SECURITY_ENABLED:
+            session_id = security_middleware.get_session_id()
+            rate_info = security_middleware.get_rate_limit_info(session_id)
+            security_info.append(f"- Requêtes: {rate_info['total_requests']}/{rate_info['limit']}")
+            security_info.append(f"- Restantes: {rate_info['remaining']}")
+
+        # Watermarking info
+        if WATERMARKING_ENABLED:
+            wm_info = watermarking.get_watermark_info("Julien")
+            security_info.append(f"- Watermark: {wm_info['type']}")
+
+        if security_info:
+            st.sidebar.markdown(f"""
+        **🔒 Sécurité:**
+        {chr(10).join(security_info)}
+        """)
+    elif WATERMARKING_ENABLED:
+        # Pour les non-admins, afficher juste une info discrète
+        username = st.session_state.get("username", "")
+        wm_info = watermarking.get_watermark_info(username)
+        if wm_info['enabled']:
+            st.sidebar.markdown(f"""
+        *🔐 Données protégées*
+        """)
+
     # Bouton de déconnexion
     if st.sidebar.button("Déconnexion"):
         st.session_state.authenticated = False
         st.session_state.username = None
         st.session_state.user_info = None
+        if SECURITY_ENABLED:
+            security_middleware.reset_session()
         st.rerun()
     
     st.sidebar.markdown("---")
