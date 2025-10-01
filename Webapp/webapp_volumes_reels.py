@@ -382,12 +382,24 @@ def display_header(df):
     # Charger l'image en base64 pour intégration directe
     try:
         import base64
-        logo_path = Path("logo.png")
-        if logo_path.exists():
-            with open(logo_path, "rb") as f:
-                logo_data = base64.b64encode(f.read()).decode()
-                logo_html = f'<img src="data:image/png;base64,{logo_data}" width="80" height="80" style="margin-right: 24px;">'
-        else:
+        # Essayer plusieurs chemins possibles pour le logo
+        logo_paths = [
+            Path("logo.png"),                              # Local (Webapp/)
+            Path("Webapp/logo.png"),                       # Depuis racine
+            Path("Images/WatchAI logo2.png"),              # Images à la racine
+            Path("../Images/WatchAI logo2.png"),           # Images depuis Webapp/
+        ]
+
+        logo_found = False
+        for logo_path in logo_paths:
+            if logo_path.exists():
+                with open(logo_path, "rb") as f:
+                    logo_data = base64.b64encode(f.read()).decode()
+                    logo_html = f'<img src="data:image/png;base64,{logo_data}" width="80" height="80" style="margin-right: 24px;">'
+                logo_found = True
+                break
+
+        if not logo_found:
             logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; margin-right: 24px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">WA</div>'
     except:
         logo_html = '<div style="width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 8px; margin-right: 24px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">WA</div>'
@@ -767,12 +779,24 @@ def check_authentication():
         # Charger le logo WATCHAI pour la page de connexion
         try:
             import base64
-            logo_path = Path("logo.png")
-            if logo_path.exists():
-                with open(logo_path, "rb") as f:
-                    logo_data = base64.b64encode(f.read()).decode()
-                    logo_html = f'<img src="data:image/png;base64,{logo_data}" width="120" style="margin-bottom: 1rem;">'
-            else:
+            # Essayer plusieurs chemins possibles pour le logo
+            logo_paths = [
+                Path("logo.png"),                              # Local (Webapp/)
+                Path("Webapp/logo.png"),                       # Depuis racine
+                Path("Images/WatchAI logo2.png"),              # Images à la racine
+                Path("../Images/WatchAI logo2.png"),           # Images depuis Webapp/
+            ]
+
+            logo_found = False
+            for logo_path in logo_paths:
+                if logo_path.exists():
+                    with open(logo_path, "rb") as f:
+                        logo_data = base64.b64encode(f.read()).decode()
+                        logo_html = f'<img src="data:image/png;base64,{logo_data}" width="120" style="margin-bottom: 1rem;">'
+                    logo_found = True
+                    break
+
+            if not logo_found:
                 logo_html = '<div style="width: 120px; height: 120px; background: #4DBDB3; border-radius: 8px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">WA</div>'
         except:
             logo_html = '<div style="width: 120px; height: 120px; background: #4DBDB3; border-radius: 8px; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px;">WA</div>'
